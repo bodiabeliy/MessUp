@@ -56,3 +56,10 @@ $color-link:inherit !important;
 .MuiGrid-root.MuiGrid-container.MuiGrid-direction-xs-column.MuiGrid-align-items-xs-center {
   width: 100% !important;
 }
+.MuiButtonBase-root.MuiButton-root.MuiButton-text {
+  min-width: 50px !important;
+}
+.chat__clipFiles {
+  display: flex;
+  flex-wrap: wrap;
+}

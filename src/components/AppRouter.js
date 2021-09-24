@@ -9,7 +9,7 @@ function AppRouter() {
  // рендеринг страницы для зарегистрированого пользователя 
  const {authorization} = useContext(Context)
  const [user] = useAuthState(authorization)
- console.log(user);
+//  console.log(user);
  return user ? 
    (
     <Switch>

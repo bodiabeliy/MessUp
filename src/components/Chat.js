@@ -10,15 +10,26 @@ import AttachFileIcon from '@material-ui/icons/AttachFile';
 import InputAdornment from '@material-ui/core/InputAdornment'
 import SendIcon from '@material-ui/icons/Send';
 import firebase from 'firebase';
+
 import React, { useContext, useEffect, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { Context } from '../index';
+
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Tooltip from '@material-ui/core/Tooltip';
 import { DropzoneDialog } from 'material-ui-dropzone';
 import Chip from '@material-ui/core/Chip'
+import {Theaters} from '@material-ui/icons'
+import {GraphicEqIcon} from '@material-ui/icons/GraphicEq';
+import {Description} from '@material-ui/icons'
+import {PictureAsPdf} from '@material-ui/icons'
+import NoteAddIcon from '@material-ui/icons/NoteAdd';
+
+import {store} from '../firebase'
 
 
+// настройка распознания речи 
 const speechRecord = window.SpeechRecognition || window.webkitSpeechRecognition
 const microphone = new speechRecord()
 microphone.continuous = true
@@ -34,9 +45,9 @@ function Chat() {
   )
   const [isListening, setListening] = useState(false)
   const [note, setNotes] = useState('')
-  const [saveText, setSaveText] = useState([])
-
-  const [open, setOpen] = React.useState(false);
+  const [clip, setClip] = useState(false);
+  const [saveFile, setSaveFile] = useState(null)
+  const [progress, setProgress] = useState(0)
 
 
  // ф-я отправки сообщений
@@ -47,7 +58,8 @@ function Chat() {
         displayName: user.displayName,
         photoAvatar: user.photoURL,
         text: values,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        clipDocument:saveFile
        })
        setValue('')
     }
@@ -55,6 +67,7 @@ function Chat() {
       alert('Error!')
     }
  }
+
 
 
  function DeleteMessage() {
@@ -69,6 +82,7 @@ function Chat() {
 
   useEffect(() => {
     HandleListening()
+
   }, [isListening])
 
 
@@ -101,11 +115,26 @@ function Chat() {
       }
     }
   }
-
-  const HandleSave = () => {
-    setSaveText([...saveText, note])
-    setNotes('')
+  // определитель типа файлов
+  const TypeChangeIcon = (fileObject) => {
+    const {type} = fileObject.file
+    switch (type) {
+      case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        return <Description />
+      case "application/pdf":
+        return <PictureAsPdf />
+      case "video/mpeg":
+          return <GraphicEqIcon />
+      case "application/mp4":
+          return <Theaters />
+      default:
+        return <Description />
+    }
   }
+  // const HandleSave = () => {
+  //   setSaveText([...saveText, note])
+  //   setNotes('')
+  // }
 
 
  return (
@@ -131,10 +160,28 @@ function Chat() {
                 style={{marginRight:'8px'}}
                 src={message.photoAvatar}
               />
-              <div>
+              <div className="chat__textBody">
               <span className='chat__SendTime' style={{fontSize: '12px', textAlign: 'right', marginLeft: '82%'}}> {message.createdAt.toDate().toString().substring(16,21)}</span> <br />
-               <span className='chat__personName'> {message.displayName}</span> <br />
-                {message.text}
+                <div className="chat__textArea">
+                  <div className="chat__text">
+                  <span className='chat__personName'> {message.displayName}</span> <br />
+                    {message.text}
+                  </div>
+                  { saveFile != null ?
+                   <div className="chat__clipFiles">
+                   <NoteAddIcon />
+                  { progress !=100 ? 
+                    <div className="chat__download">
+                       <CircularProgress value={progress} />
+                       <i> Процесс загрузки документа:</i> <b> {progress}</b> <i>%</i>
+                    </div>
+                    :
+                    saveFile[0].path
+                  }
+                 </div>
+                 : ''
+                  }
+                </div>
               </div>
              </div>
             </Grid>
@@ -173,27 +220,58 @@ function Chat() {
           </Button>
            }
            <Button>
-           <AttachFileIcon  onClick={() => setOpen(true)}/>
+           <AttachFileIcon  onClick={() => setClip(true)}/>
            </Button>
             <DropzoneDialog
-              acceptedFiles={['image/*, .mp3, .mp4']}
+              acceptedFiles={['image/*, .mpeg*, .mp3, .mp4', '.doc', '.docx', '.pdf', '.exe', '.rar', '.zip', '.iso']}
               cancelButtonText={"Отмена"}
-              filesLimit={10}
-              submitButtonText={"Отправить"}
+              filesLimit={200}
+              submitButtonText={"Прикрепить"}
               dropzoneText={"Переместите и/или загрузите файлы сюда"}
               dialogTitle={"Контейнер файлов"}
-              getFileLimitExceedMessage={() => "Превышен лимит загрузки. Максимальное количество файлов: 10"}
+              getFileLimitExceedMessage={() => "Превышен лимит загрузки. Максимальное количество файлов: 200"}
               getFileAddedMessage={() => "Файл успешно добавлен!"}
+              getFileRemovedMessage={() => "Файл успешно удален!"}
+              getDropRejectMessage={() => "Ошибка! Не поддерживаемый формат файла."}
+              getPreviewIcon={TypeChangeIcon}
               maxFileSize={100000000000}
-              open={open}
-              onClose={() => setOpen(false)}
+              open={clip}
+              onClose={() => setClip(false)}
               onSave={(files) => {
                 console.log('Files:', files);
-                setOpen(false);
+                const UploadDocuments = () => {
+                  // преобразование к массиву объектов для возможности отправки
+                  const upload = files.map((obj)=> { return Object.assign({}, obj)});
+                  setSaveFile(upload)
+                  // поочередная загрузка
+                  for (let file of files) {
+                    console.log(file);
+                    const UploadDocuments = store.ref(`store/${file.name}`).put(file)
+                    UploadDocuments.on(
+                      "state_changed",
+                      // расчет загрузки
+                      snapshot => {
+                        
+                        const progreessUploading = Math.round(
+                          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+                        )
+                        console.log(`Прогресс загрузки: ${progreessUploading} %`);
+                        setProgress(progreessUploading)
+                      },
+                      error => {
+                        console.log(error);
+                      }
+                    )
+                  }
+                  console.log('Текущий файл:', saveFile);
+                }
+                UploadDocuments()
+
               }}
               showPreviews={true}
               showFileNamesInPreview={true}
             />
+
          </div>
 
           </Grid>
@@ -216,9 +294,9 @@ function Chat() {
              Удалить переписку
             </Button>
             {/* <h2>Save Record Text (test)</h2>
-            {saveText.map(message => (
+            {/* {setsaveFile.map(message => (
               <p key={message}>{message}</p>
-            ))} */}
+            ))} */} 
         </Grid>
       </Grid>
     </Grid>
