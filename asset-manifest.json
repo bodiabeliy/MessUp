@@ -1,8 +1,8 @@
 {
   "files": {
-    "main.css": "/MessUp/static/css/main.7e027981.chunk.css",
-    "main.js": "/MessUp/static/js/main.0a65103c.chunk.js",
-    "main.js.map": "/MessUp/static/js/main.0a65103c.chunk.js.map",
+    "main.css": "/MessUp/static/css/main.e9d56565.chunk.css",
+    "main.js": "/MessUp/static/js/main.67d17b4e.chunk.js",
+    "main.js.map": "/MessUp/static/js/main.67d17b4e.chunk.js.map",
     "runtime-main.js": "/MessUp/static/js/runtime-main.47d54513.js",
     "runtime-main.js.map": "/MessUp/static/js/runtime-main.47d54513.js.map",
     "static/js/2.e3e32bd6.chunk.js": "/MessUp/static/js/2.e3e32bd6.chunk.js",
@@ -10,13 +10,13 @@
     "static/js/3.b5841db9.chunk.js": "/MessUp/static/js/3.b5841db9.chunk.js",
     "static/js/3.b5841db9.chunk.js.map": "/MessUp/static/js/3.b5841db9.chunk.js.map",
     "index.html": "/MessUp/index.html",
-    "static/css/main.7e027981.chunk.css.map": "/MessUp/static/css/main.7e027981.chunk.css.map",
+    "static/css/main.e9d56565.chunk.css.map": "/MessUp/static/css/main.e9d56565.chunk.css.map",
     "static/js/2.e3e32bd6.chunk.js.LICENSE.txt": "/MessUp/static/js/2.e3e32bd6.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.47d54513.js",
     "static/js/2.e3e32bd6.chunk.js",
-    "static/css/main.7e027981.chunk.css",
-    "static/js/main.0a65103c.chunk.js"
+    "static/css/main.e9d56565.chunk.css",
+    "static/js/main.67d17b4e.chunk.js"
   ]
 }
